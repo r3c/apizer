@@ -15,7 +15,7 @@ suitable API.
 Websites catalog
 ----------------
 
-* Empty!
+See: https://apizer.herokuapp.com/docs/
 
 
 Resource
