@@ -1,8 +1,9 @@
-import { Controller, Get, Query, Route } from "tsoa";
+import { Controller, Get, Query, Route, Tags } from "tsoa";
 import { Template } from "./template";
 import { TemplateService } from "./template.service";
 
 @Route(`api/ambient-mixer.com/v1/templates`)
+@Tags("ambient-mixer.com")
 export class TemplateController extends Controller {
 	private readonly service = new TemplateService();
 
