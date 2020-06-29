@@ -3,8 +3,6 @@ import { Template } from "./template";
 import cheerio from "cheerio";
 import fetch from "node-fetch";
 
-const baseUrl = "https://www.ambient-mixer.com";
-
 export class TemplateService {
 	public async getMostRated(offset: number, count: number): Promise<Template[]> {
 		return this.getTemplates("most-rated-audio", offset, count);
@@ -18,7 +16,7 @@ export class TemplateService {
 		const templates = [];
 
 		for (const page of paginate(51, offset, count)) {
-			const html = await fetch(`${baseUrl}/${path}?page=${page.number}`);
+			const html = await fetch(`https://www.ambient-mixer.com/${path}?page=${page.number}`);
 
 			if (!html.ok)
 				continue;
