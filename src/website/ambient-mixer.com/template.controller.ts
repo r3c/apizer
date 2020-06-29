@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Route, Hidden } from "tsoa";
+import { Controller, Get, Query, Route } from "tsoa";
 import { Template } from "./template";
 import { TemplateService } from "./template.service";
 
@@ -8,16 +8,16 @@ export class TemplateController extends Controller {
 
 	@Get("most-rated")
 	public async getMostRated(
-		@Query() @Hidden() offset?: number,
-		@Query() @Hidden() count?: number
+		@Query() offset?: number,
+		@Query() count?: number
 	): Promise<Template[]> {
 		return this.service.getMostRated(offset || 0, count || 10);
 	}
 
 	@Get("most-recent")
 	public async getMostRecent(
-		@Query() @Hidden() offset?: number,
-		@Query() @Hidden() count?: number
+		@Query() offset?: number,
+		@Query() count?: number
 	): Promise<Template[]> {
 		return this.service.getMostRecent(offset || 0, count || 10);
 	}

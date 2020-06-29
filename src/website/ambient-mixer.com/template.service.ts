@@ -1,3 +1,4 @@
+import { paginate } from "../../query/pagination";
 import { Template } from "./template";
 import cheerio from "cheerio";
 import fetch from "node-fetch";
@@ -13,27 +14,29 @@ export class TemplateService {
 		return this.getTemplates("most-recent-audio", offset, count);
 	}
 
-	private async getTemplates(path: string, _offset: number, _count: number): Promise<Template[]> {
-		const html = await fetch(`${baseUrl}/${path}`);
-
-		if (!html.ok)
-			return [];
-
-		const buffer = await html.buffer();
-		const query = cheerio.load(buffer);
-		const regex = new RegExp("[0-9]+$");
-
+	private async getTemplates(path: string, offset: number, count: number): Promise<Template[]> {
 		const templates = [];
 
-		for (const element of query("div[class^=select_dash_ambient]").toArray()) {
-			const id = regex.exec(query(".vote_now a", element).attr("href") || "");
-			const title = query(".ambient_title a", element).text();
+		for (const page of paginate(51, offset, count)) {
+			const html = await fetch(`${baseUrl}/${path}?page=${page.number}`);
 
-			if (id !== null && id.length > 0 && title) {
-				templates.push({
-					id: parseInt(id[0]),
-					title: title
-				});
+			if (!html.ok)
+				continue;
+
+			const buffer = await html.buffer();
+			const query = cheerio.load(buffer);
+			const regex = new RegExp("[0-9]+$");
+
+			for (const element of query("div[class^=select_dash_ambient]").slice(page.skip, page.skip + page.count).toArray()) {
+				const id = regex.exec(query(".vote_now a", element).attr("href") || "");
+				const title = query(".ambient_title a", element).text();
+
+				if (id !== null && id.length > 0 && title) {
+					templates.push({
+						id: parseInt(id[0]),
+						title: title
+					});
+				}
 			}
 		}
 
