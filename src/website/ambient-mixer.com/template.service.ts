@@ -1,6 +1,6 @@
 import { paginate } from "../../query/pagination";
+import { selectWithCheerio } from "../../query/selection";
 import { Template } from "./template";
-import cheerio from "cheerio";
 import fetch from "node-fetch";
 
 export class TemplateService {
@@ -16,20 +16,24 @@ export class TemplateService {
 		const templates = [];
 
 		for (const page of paginate(51, offset, count)) {
-			const html = await fetch(`https://www.ambient-mixer.com/${path}?page=${page.number}`);
+			const response = await fetch(`https://www.ambient-mixer.com/${path}?page=${page.number}`);
 
-			if (!html.ok)
+			if (!response.ok)
 				continue;
 
-			const buffer = await html.buffer();
-			const query = cheerio.load(buffer);
+			const buffer = await response.buffer();
 			const regex = new RegExp("[0-9]+$");
 
-			for (const element of query("div[class^=select_dash_ambient]").slice(page.skip, page.skip + page.count).toArray()) {
-				const id = regex.exec(query(".vote_now a", element).attr("href") || "");
-				const title = query(".ambient_title a", element).text();
+			const elements = selectWithCheerio(buffer, "div[class^=select_dash_ambient]", {
+				id: ".vote_now a",
+				title: ".ambient_title a"
+			});
 
-				if (id !== null && id.length > 0 && title) {
+			for (const element of elements.slice(page.skip, page.skip + page.count)) {
+				const id = regex.exec(element.id.attr("href") || "");
+				const title = element.title.text();
+
+				if (id !== null && title !== "") {
 					templates.push({
 						id: parseInt(id[0]),
 						title: title

@@ -7,7 +7,7 @@ import { TrackService } from "./track.service";
 export class TrackController extends Controller {
 	private readonly service = new TrackService();
 
-	@Get("template/{templateId}")
+	@Get("by-template/{templateId}")
 	public async getTracks(templateId: number): Promise<Track[]> {
 		return this.service.getTracks(templateId);
 	}

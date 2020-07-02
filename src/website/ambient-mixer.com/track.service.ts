@@ -1,27 +1,41 @@
+import { selectWithCheerio } from "../../query/selection";
 import { Random, Track } from "./track";
-import cheerio from "cheerio";
 import fetch from "node-fetch";
 
 export class TrackService {
 	public async getTracks(templateId: number): Promise<Track[]> {
-		const html = await fetch(`https://xml.ambient-mixer.com/audio-template?id_template=${templateId}`);
+		const response = await fetch(`https://xml.ambient-mixer.com/audio-template?id_template=${templateId}`);
 
-		if (!html.ok)
+		if (!response.ok)
 			return [];
 
-		const buffer = await html.buffer();
-		const query = cheerio.load(buffer);
+		const buffer = await response.buffer();
+
+		const elements = selectWithCheerio(buffer, "audio_template *", {
+			balance: "balance",
+			crossfade: "crossfade",
+			id: "id_audio",
+			mute: "mute",
+			name: "name_audio",
+			randomCounter: "random_counter",
+			randomEnabled: "random",
+			randomUnit: "random_unit",
+			url: "url_audio",
+			volume: "volume"
+		});
+
 		const tracks = [];
 
-		for (const channel of query("audio_template *").toArray().filter(element => element.tagName.startsWith("channel"))) {
-			const randomCounter = query("random_counter", channel).text();
-			const randomEnabled = query("random", channel).text();
-			const randomUnit = query("random_unit", channel).text();
+		for (const element of elements) {
+			if (element.id.length === 0) {
+				continue;
+			}
 
 			let random: Random | undefined;
 
-			if (randomEnabled === "true" && randomCounter && randomUnit) {
-				const randomCounterValue = parseInt(randomCounter);
+			if (element.randomEnabled.text() === "true" && element.randomCounter.length !== 0 && element.randomUnit.length !== 0) {
+				const randomCounterValue = parseInt(element.randomCounter.text());
+				const randomUnit = element.randomUnit.text();
 				const randomUnitCharacter = randomUnit.slice(randomUnit.length - 1);
 				const randomUnitValue = parseInt(randomUnit.slice(0, randomUnit.length - 1));
 
@@ -47,14 +61,14 @@ export class TrackService {
 			}
 
 			tracks.push({
-				balance: parseInt(query("balance", channel).text()),
-				crossfade: query("crossfade", channel).text() === "true",
-				id: parseInt(query("id_audio", channel).text()),
-				mute: query("mute", channel).text() === "true",
-				name: query("name_audio", channel).text(),
+				balance: parseInt(element.balance.text()),
+				crossfade: element.crossfade.text() === "true",
+				id: parseInt(element.id.text()),
+				mute: element.mute.text() === "true",
+				name: element.name.text(),
 				random: random,
-				url: query("url_audio", channel).text(),
-				volume: parseInt(query("volume", channel).text())
+				url: element.url.text(),
+				volume: parseInt(element.volume.text())
 			});
 		}
 
