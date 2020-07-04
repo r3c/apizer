@@ -27,7 +27,10 @@ export class TrackService {
 		const tracks = [];
 
 		for (const element of elements) {
-			if (element.id.length === 0) {
+			const id = element.id.text();
+			const url = element.url.text();
+
+			if (id.length === 0 || url.length === 0) {
 				continue;
 			}
 
@@ -63,11 +66,11 @@ export class TrackService {
 			tracks.push({
 				balance: parseInt(element.balance.text()),
 				crossfade: element.crossfade.text() === "true",
-				id: parseInt(element.id.text()),
+				id: parseInt(id),
 				mute: element.mute.text() === "true",
 				name: element.name.text(),
 				random: random,
-				url: element.url.text(),
+				url: url,
 				volume: parseInt(element.volume.text())
 			});
 		}
