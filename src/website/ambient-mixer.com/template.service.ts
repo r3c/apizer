@@ -1,7 +1,7 @@
 import { paginate } from "../../query/pagination";
 import { selectWithCheerio } from "../../query/selection";
+import { get } from "../../query/submission";
 import { Template } from "./template";
-import fetch from "node-fetch";
 
 export class TemplateService {
 	public async getMostRated(offset: number, count: number): Promise<Template[]> {
@@ -14,20 +14,14 @@ export class TemplateService {
 
 	private async getTemplates(path: string, offset: number, count: number): Promise<Template[]> {
 		const templates = [];
+		const extract = (buffer: Buffer) => selectWithCheerio(buffer, "div[class^=select_dash_ambient]", {
+			id: ".vote_now a",
+			title: ".ambient_title a"
+		});
 
 		for (const page of paginate(51, offset, count)) {
-			const response = await fetch(`https://www.ambient-mixer.com/${path}?page=${page.number}`);
-
-			if (!response.ok)
-				continue;
-
-			const buffer = await response.buffer();
+			const elements = await get(`https://www.ambient-mixer.com/${path}?page=${page.number}`, extract, []);
 			const regex = new RegExp("[0-9]+$");
-
-			const elements = selectWithCheerio(buffer, "div[class^=select_dash_ambient]", {
-				id: ".vote_now a",
-				title: ".ambient_title a"
-			});
 
 			for (const element of elements.slice(page.skip, page.skip + page.count)) {
 				const id = regex.exec(element.id.attr("href") || "");

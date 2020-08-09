@@ -1,17 +1,10 @@
 import { selectWithCheerio } from "../../query/selection";
+import { get } from "../../query/submission";
 import { Random, Track } from "./track";
-import fetch from "node-fetch";
 
 export class TrackService {
 	public async getTracks(templateId: number): Promise<Track[]> {
-		const response = await fetch(`https://xml.ambient-mixer.com/audio-template?id_template=${templateId}`);
-
-		if (!response.ok)
-			return [];
-
-		const buffer = await response.buffer();
-
-		const elements = selectWithCheerio(buffer, "audio_template *", {
+		const extract = (buffer: Buffer) => selectWithCheerio(buffer, "audio_template *", {
 			balance: "balance",
 			crossfade: "crossfade",
 			id: "id_audio",
@@ -24,6 +17,7 @@ export class TrackService {
 			volume: "volume"
 		});
 
+		const elements = await get(`https://xml.ambient-mixer.com/audio-template?id_template=${templateId}`, extract, []);
 		const tracks = [];
 
 		for (const element of elements) {
