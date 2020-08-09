@@ -2,7 +2,7 @@
  * Search result.
  */
 export interface Match {
-	id: string,
+	id: number,
 	leechers: number,
 	seeders: number,
 	size: number,

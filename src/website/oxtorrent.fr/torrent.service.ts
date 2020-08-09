@@ -31,7 +31,7 @@ export class TorrentService {
 			const urlMagnet = await this.getMagnet(urlMatch[1]);
 
 			return {
-				id: urlMatch[2],
+				id: parseInt(urlMatch[2]),
 				leechers: parseInt(element.leech.text()),
 				seeders: parseInt(element.seed.text()),
 				size: parseInt(sizeFragments[0]),
