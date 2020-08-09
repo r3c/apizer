@@ -4,7 +4,7 @@ import { TorrentService } from "./torrent.service";
 
 @Route(`api/oxtorrent.fr/v1/torrents`)
 @Tags("oxtorrent.fr")
-export class TorrentController extends Controller {
+export class OxTorrentTorrentController extends Controller {
 	private readonly service = new TorrentService();
 
 	@Get("by-keywords/{keywords}")

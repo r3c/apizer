@@ -4,7 +4,7 @@ import { TemplateService } from "./template.service";
 
 @Route(`api/ambient-mixer.com/v1/templates`)
 @Tags("ambient-mixer.com")
-export class TemplateController extends Controller {
+export class AmbientMixerTemplateController extends Controller {
 	private readonly service = new TemplateService();
 
 	@Get("most-rated")

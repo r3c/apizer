@@ -7,19 +7,20 @@ const base = "https://wvww.oxtorrent.fr";
 
 export class TorrentService {
 	public async searchByKeywords(keywords: string): Promise<Match[]> {
-		const idRegex = /torrents\/(([0-9]+)\/.*)/;
-		const input = {
-			story: keywords
-		};
-
-		const select = (buffer: Buffer) => selectWithCheerio(buffer, ".listing-torrent tr", {
+		const extract = (buffer: Buffer) => selectWithCheerio(buffer, ".listing-torrent tr", {
 			leech: "td:nth-child(4)",
 			link: "td:nth-child(1) a",
 			seed: "td:nth-child(3)",
 			size: "td:nth-child(2)"
 		});
 
-		const convert = (buffer: Buffer) => select(buffer).map(async element => {
+		const idRegex = /torrents\/(([0-9]+)\/.*)/;
+		const input = {
+			story: keywords
+		};
+
+		const elements = await postFormData(`${base}/index.php?do=search&subaction=search`, input, extract, []);
+		const results = await Promise.all(elements.map(async element => {
 			const sizeFragments = element.size.text().split(" ");
 			const url = element.link.attr("href") || "";
 			const urlMatch = idRegex.exec(url);
@@ -39,25 +40,22 @@ export class TorrentService {
 				urlMagnet: urlMagnet,
 				urlPage: url
 			};
-		});
-
-		const promises = await postFormData(`${base}/index.php?do=search&subaction=search`, input, convert, []);
-		const results = await Promise.all(promises);
+		}));
 
 		return results.filter(notEmpty);
 	}
 
-	private getMagnet(suffix: string): Promise<string> {
-		const select = (buffer: Buffer) => selectWithCheerio(buffer, ".download", {
+	private async getMagnet(suffix: string): Promise<string> {
+		const extract = (buffer: Buffer) => selectWithCheerio(buffer, ".download", {
 			magnet: ".btn-magnet a"
 		});
 
-		const convert = (buffer: Buffer) => {
-			const element = select(buffer)[0];
+		const elements = await get(`${base}/torrents/${suffix}`, extract, [])
 
-			return element.magnet.attr("href") || "";
-		};
+		if (elements.length < 1) {
+			return "";
+		}
 
-		return get(`${base}/torrents/${suffix}`, convert, "");
+		return elements[0].magnet.attr("href") || "";
 	}
 }
