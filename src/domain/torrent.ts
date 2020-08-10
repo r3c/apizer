@@ -12,7 +12,6 @@ export interface Entry {
 	page: string,
 	seeders: number,
 	size: number,
-	sizeUnit: string,
 	title: string,
 	torrent: string
 }

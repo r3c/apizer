@@ -1,9 +1,11 @@
 import { Entry } from "../../domain/torrent";
 import { notEmpty } from "../../functional/array";
+import { matchRegularExpression, matchSizeWithUnit } from "../../functional/string";
 import { selectWithCheerio } from "../../query/selection";
 import { get, postFormData } from "../../query/submission";
 
 const base = "https://www.limetorrents.info";
+const suffixRegex = /-([0-9]+)\.html/;
 
 export class TorrentService {
 	public async searchByKeywords(keywords: string): Promise<Entry[]> {
@@ -14,31 +16,31 @@ export class TorrentService {
 			size: "td:nth-child(3)"
 		});
 
-		const idRegex = /-([0-9]+)\.html/;
 		const input = {
-			catname: 'all',
+			catname: "all",
 			q: keywords
 		};
 
 		const elements = await postFormData(`${base}/post/search.php`, input, extract, []);
 		const results = await Promise.all(elements.map(async element => {
-			const page = element.link.attr("href") || "";
-			const pageMatch = idRegex.exec(page);
-			const sizeFragments = element.size.text().split(" ");
+			const suffix = element.link.attr("href") || "";
+			const [id] = matchRegularExpression(suffix, suffixRegex, [1]);
+			const page = `${base}${suffix}`;
+			const size = matchSizeWithUnit(element.size.text());
 
-			if (pageMatch === null || sizeFragments.length !== 2)
+			if (id === undefined || size === undefined) {
 				return undefined;
+			}
 
 			const [magnet, torrent] = await this.getLinks(page);
 
 			return {
-				id: parseInt(pageMatch[1]),
+				id: parseInt(id),
 				leechers: parseInt(element.leech.text()),
 				magnet: magnet,
 				page: page,
 				seeders: parseInt(element.seed.text()),
-				size: parseInt(sizeFragments[0]),
-				sizeUnit: sizeFragments[1],
+				size: Math.round(size),
 				title: element.link.text(),
 				torrent: torrent
 			};
@@ -47,13 +49,13 @@ export class TorrentService {
 		return results.filter(notEmpty);
 	}
 
-	private async getLinks(suffix: string): Promise<[string, string]> {
+	private async getLinks(page: string): Promise<[string, string]> {
 		const extract = (buffer: Buffer) => selectWithCheerio(buffer, ".torrentinfo", {
 			magnet: "a:contains('Magnet Download')",
 			torrent: "a:contains('Download torrent')"
 		});
 
-		const elements = await get(`${base}${suffix}`, extract, [])
+		const elements = await get(page, extract, [])
 
 		if (elements.length < 1) {
 			return ["", ""];

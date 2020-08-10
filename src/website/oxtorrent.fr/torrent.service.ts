@@ -1,9 +1,11 @@
 import { Entry } from "../../domain/torrent";
 import { notEmpty } from "../../functional/array";
+import { matchRegularExpression, matchSizeWithUnit } from "../../functional/string";
 import { selectWithCheerio } from "../../query/selection";
 import { get, postFormData } from "../../query/submission";
 
 const base = "https://wvww.oxtorrent.fr";
+const pageRegex = /torrents\/(([0-9]+)\/.*)/;
 
 export class TorrentService {
 	public async searchByKeywords(keywords: string): Promise<Entry[]> {
@@ -14,7 +16,6 @@ export class TorrentService {
 			size: "td:nth-child(2)"
 		});
 
-		const idRegex = /torrents\/(([0-9]+)\/.*)/;
 		const input = {
 			story: keywords
 		};
@@ -22,22 +23,21 @@ export class TorrentService {
 		const elements = await postFormData(`${base}/index.php?do=search&subaction=search`, input, extract, []);
 		const results = await Promise.all(elements.map(async element => {
 			const page = element.link.attr("href") || "";
-			const pageMatch = idRegex.exec(page);
-			const sizeFragments = element.size.text().split(" ");
+			const [suffix, id] = matchRegularExpression(page, pageRegex, [1, 2]);
+			const size = matchSizeWithUnit(element.size.text());
 
-			if (sizeFragments.length !== 2 || pageMatch === null)
+			if (id === undefined || size === undefined || suffix === undefined)
 				return undefined;
 
-			const magnet = await this.getMagnet(pageMatch[1]);
+			const magnet = await this.getMagnet(suffix);
 
 			return {
-				id: parseInt(pageMatch[2]),
+				id: parseInt(id),
 				leechers: parseInt(element.leech.text()),
 				magnet: magnet,
 				page: page,
 				seeders: parseInt(element.seed.text()),
-				size: parseInt(sizeFragments[0]),
-				sizeUnit: sizeFragments[1],
+				size: Math.round(size),
 				title: element.link.attr("title") || "",
 				torrent: ""
 			};
