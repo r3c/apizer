@@ -61,7 +61,7 @@ class ${className} {
 			$magnet = (string)$result['magnet'];
 			$page = isset($result['page']) ? (string)$result['page'] : '';
 			$seeders = isset($result['seeders']) ? (int)$result['seeders'] : 0;
-			$size = isset($result['size']) ? (int)$result['size'] : 0;
+			$size = isset($result['size']) ? (float)$result['size'] : 0;
 			$title = isset($result['title']) ? (string)$result['title'] : 'No title';
 
 			$plugin->addResult($title, $magnet, $size, $created, $page, '', $seeders, $leechers, '');
