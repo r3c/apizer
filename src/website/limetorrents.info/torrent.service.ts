@@ -1,4 +1,4 @@
-import { Match } from "../oxtorrent.fr/torrent";
+import { Entry } from "../../domain/torrent";
 import { notEmpty } from "../../functional/array";
 import { selectWithCheerio } from "../../query/selection";
 import { get, postFormData } from "../../query/submission";
@@ -6,7 +6,7 @@ import { get, postFormData } from "../../query/submission";
 const base = "https://www.limetorrents.info";
 
 export class TorrentService {
-	public async searchByKeywords(keywords: string): Promise<Match[]> {
+	public async searchByKeywords(keywords: string): Promise<Entry[]> {
 		const extract = (buffer: Buffer) => selectWithCheerio(buffer, ".table2 tr[bgcolor]", {
 			leech: ".tdleech",
 			link: ".tt-name a:not([rel])",
