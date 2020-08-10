@@ -21,24 +21,25 @@ export class TorrentService {
 
 		const elements = await postFormData(`${base}/index.php?do=search&subaction=search`, input, extract, []);
 		const results = await Promise.all(elements.map(async element => {
+			const page = element.link.attr("href") || "";
+			const pageMatch = idRegex.exec(page);
 			const sizeFragments = element.size.text().split(" ");
-			const url = element.link.attr("href") || "";
-			const urlMatch = idRegex.exec(url);
 
-			if (sizeFragments.length !== 2 || urlMatch === null)
+			if (sizeFragments.length !== 2 || pageMatch === null)
 				return undefined;
 
-			const urlMagnet = await this.getMagnet(urlMatch[1]);
+			const magnet = await this.getMagnet(pageMatch[1]);
 
 			return {
-				id: parseInt(urlMatch[2]),
+				id: parseInt(pageMatch[2]),
 				leechers: parseInt(element.leech.text()),
+				magnet: magnet,
+				page: page,
 				seeders: parseInt(element.seed.text()),
 				size: parseInt(sizeFragments[0]),
 				sizeUnit: sizeFragments[1],
 				title: element.link.attr("title") || "",
-				urlMagnet: urlMagnet,
-				urlPage: url
+				torrent: ""
 			};
 		}));
 

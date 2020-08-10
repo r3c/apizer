@@ -22,25 +22,25 @@ export class TorrentService {
 
 		const elements = await postFormData(`${base}/post/search.php`, input, extract, []);
 		const results = await Promise.all(elements.map(async element => {
+			const page = element.link.attr("href") || "";
+			const pageMatch = idRegex.exec(page);
 			const sizeFragments = element.size.text().split(" ");
-			const url = element.link.attr("href") || "";
-			const urlMatch = idRegex.exec(url);
 
-			if (sizeFragments.length !== 2 || urlMatch === null)
+			if (pageMatch === null || sizeFragments.length !== 2)
 				return undefined;
 
-			const [urlMagnet, urlTorrent] = await this.getLinks(url);
+			const [magnet, torrent] = await this.getLinks(page);
 
 			return {
-				id: parseInt(urlMatch[1]),
+				id: parseInt(pageMatch[1]),
 				leechers: parseInt(element.leech.text()),
+				magnet: magnet,
+				page: page,
 				seeders: parseInt(element.seed.text()),
 				size: parseInt(sizeFragments[0]),
 				sizeUnit: sizeFragments[1],
 				title: element.link.text(),
-				urlMagnet: urlMagnet,
-				urlPage: url,
-				urlTorrent: urlTorrent
+				torrent: torrent
 			};
 		}));
 
@@ -60,9 +60,9 @@ export class TorrentService {
 		}
 
 		const element = elements[0];
-		const urlMagnet = element.magnet.attr("href") || "";
-		const urlTorrent = element.torrent.attr("href") || "";
+		const magnet = element.magnet.attr("href") || "";
+		const torrent = element.torrent.attr("href") || "";
 
-		return [urlMagnet, urlTorrent];
+		return [magnet, torrent];
 	}
 }
