@@ -70,7 +70,7 @@ class ${className} {
 }
 `);
 
-	response.setHeader("Content-Disposition", "attachment; filename=\"synology-plugin.dlm\"");
+	response.setHeader("Content-Disposition", `attachment; filename="${name}-Synology-Plugin.dlm"`);
 	response.setHeader("Content-Type", "application/octet-stream");
 
 	// Piping `pack` into gzip behaves in a weird way, so we're reading byte
